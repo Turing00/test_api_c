@@ -1,0 +1,55 @@
+#!/usr/bin/zsh
+
+#This the first version of the silver searcher script
+
+##local functions
+
+# Usage Function
+function silverSearcherUsage() {
+    echo -e "\033[32;5;7m Silver Searcher\033[0m"
+    echo -e "\033[31;5m Usage: ./`basename ${0}` [OPTION] PATTERN [FILEPATH]... \033[0m"
+    echo -e "\033[31;5m                  -h --help: Print this help\033[0m"
+    echo -e "\033[31;5m                  -i --include: Print the matched symbol + line number in include files\033[0m"
+    echo -e "\033[31;5m                  -s --source: Print the matched symbol + line number in source files\033[0m"
+    echo -e "\033[31;5m                  -q --quit: Quit silver searcher\033[0m"
+    echo -e "\033[36;5;7m                ...\033[0m"
+}
+
+# Search symbols inside include files
+function getIncludeSymbols() {
+    grep -nHi --color=auto ${1} ${2}/include/*
+}
+
+# Search symbols inside source files
+function getSourceSymbols() {
+    grep -nHi --color=auto ${1} ${2}/src/*
+}
+
+if [[ ${#} == 0 ]]; then
+    echo -e "\033[31;5m Usage: ./`basename ${0}` [OPTION] PATTERN [FILEPATH]... \033[0m"
+    echo -e "\033[31;5m Try ./`basename ${0}` --help or -h for more information.\033[0m"
+else
+    if [[ -e ${3} && -d ${3} ]]; then
+        CD=$(cd ${3} && pwd)
+        for i in ${CD}; do
+            case ${1} in
+                --include|-i)
+                    getIncludeSymbols ${2} ${i}
+                    ;;
+                --src|-s)
+                    getSourceSymbols ${2} ${i}
+                    ;;
+            esac
+        done
+    fi
+    
+    case ${1} in
+        --help|-h)
+            silverSearcherUsage
+            ;;
+        --quit|-q)
+            ;;
+        *)
+            ;;
+    esac
+fi
