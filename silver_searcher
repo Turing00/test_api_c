@@ -1,50 +1,113 @@
-#!/usr/bin/zsh
+#!/usr/bin/env bash
 
 #This the first version of the silver searcher script
 
-##local functions
+#**********************************************************************#
+#*** fichier: script shell                                          ***#
+#*** search pattern trough files                                    ***#
+#**********************************************************************#
+
+##global variables
+OPTION="${1}"
+PATTERN="${2}"
+[[ -z "${3}" ]] && FILEPATH="${3}"
+#debug_mode='0'
+
+########## local functions
+
+# set up Function
+# message () 
+# {
+#    printf '%b\n' "${1}" >&2
+# }
+
+# success () 
+# { 
+#    if [[ "$ret" -eq '0' ]]; then
+#        echo -e "\033[1;32mX\033[0m"
+#    fi
+# }
+
+# error () 
+# {
+#    echo -e "\033[1;31m!\033[0m"
+#    exit 1
+# }
+
+# debug () 
+# {
+#    if [[ "${debug_mode}" -eq '1' ]] && [[ "${ret}" -gt '1' ]]; then
+#        message "An error occured in function \"${FUNCNAME[${i}+1]}\", on line ${BASHLINENO[${i}+1]}, sorry:("
+#    fi
+# }
 
 # Usage Function
-function silverSearcherUsage() {
+silverSearcherUsage ()
+{
     echo -e "\033[32;5;7m Silver Searcher\033[0m"
-    echo -e "\033[31;5m Usage: ./`basename ${0}` [OPTION] PATTERN [FILEPATH]... \033[0m"
-    echo -e "\033[31;5m                  -h --help: Print this help\033[0m"
+    echo -e "\033[31;5m Usage: ./$(basename "${0}") [OPTION] PATTERN [FILEPATH]... \033[0m"
+    echo -e "\033[31;5m                  -h --help ? : Print this help\033[0m"
     echo -e "\033[31;5m                  -i --include: Print the matched symbol + line number in include files\033[0m"
-    echo -e "\033[31;5m                  -s --source: Print the matched symbol + line number in source files\033[0m"
-    echo -e "\033[31;5m                  -q --quit: Quit silver searcher\033[0m"
-    echo -e "\033[36;5;7m                ...\033[0m"
+    echo -e "\033[31;5m                  -s --source : Print the matched symbol + line number in source files\033[0m"
+    echo -e "\033[31;5m                  -q --quit   : Quit silver searcher\033[0m"
+    echo -e "\033[36;5;7m ...\033[0m"
+}
+
+#Error Handling Function
+silverSearcherErrorHandling ()
+{
+    echo -e "\033[31;5m Usage: ./$(basename "${0}") [OPTION] PATTERN [FILEPATH]... \033[0m"
+    echo -e "\033[31;5m Try ./$(basename "${0}") --help or -h or ? for more information.\033[0m"
 }
 
 # Search symbols inside include files
-function getIncludeSymbols() {
-    grep -nHi --color=auto ${1} ${2}/include/*
+getIncludeSymbols ()
+{
+    #1 : PATTERN
+    #2 : FILEPATH
+    echo -e "\033[1;32m Search symbols inside include files...\033[0m"
+
+    local PATTERN="${1}"
+    local FILEPATH="${2}"
+
+    grep -nHi --color=auto "${PATTERN}" "${FILEPATH}"/include/*
+    #ret="${?}"
 }
 
 # Search symbols inside source files
-function getSourceSymbols() {
-    grep -nHi --color=auto ${1} ${2}/src/*
+getSourceSymbols ()
+{
+    #1 : PATTERN
+    #2 : FILEPATH
+    echo -e "\033[1;32m Search symbols inside sources files...\033[0m"
+
+    local PATTERN="${1}"
+    local FILEPATH="${2}"
+
+    grep -nHi --color=auto "${PATTERN}" "${FILEPATH}"/src/*
+    #ret="${?}"
 }
 
-if [[ ${#} == 0 ]]; then
-    echo -e "\033[31;5m Usage: ./`basename ${0}` [OPTION] PATTERN [FILEPATH]... \033[0m"
-    echo -e "\033[31;5m Try ./`basename ${0}` --help or -h for more information.\033[0m"
+########## Main()
+if [[ ${#} -eq 0 ]]; then
+    silverSearcherErrorHandling
 else
-    if [[ -e ${3} && -d ${3} ]]; then
-        CD=$(cd ${3} && pwd)
-        for i in ${CD}; do
-            case ${1} in
+    if [[ -e ${FILEPATH} && -d ${FILEPATH} ]]; then
+        CD=$(cd "${FILEPATH}" && pwd)
+        for file in ${CD}; do
+            case ${OPTION} in
                 --include|-i)
-                    getIncludeSymbols ${2} ${i}
+                    getIncludeSymbols "${PATTERN}" "${file}"
                     ;;
                 --src|-s)
-                    getSourceSymbols ${2} ${i}
+                    getSourceSymbols "${PATTERN}" "${file}"
                     ;;
             esac
         done
     fi
     
-    case ${1} in
-        --help|-h)
+    case ${OPTION} in
+        --help|-h|?)
             silverSearcherUsage
             ;;
         --quit|-q)

@@ -1,18 +1,23 @@
 # My first Hello App Makefile
 
-# This is also my first "master" Makefile
-DEBUG = yes
-export CC = gcc
-export DEBUG_CFLAGS = -W -Wall -ansi -pedantic -g
-export RELEASE_CFLAGS = -W -Wall -ansi -pedantic
+#**********************************************************************#
+#*** fichier: Makefile                                              ***#
+#*** create depend, build, clean, rebuild project                   ***#
+#**********************************************************************#
 
-ifeq ($(DEBUG), yes)
-	CFLAGS = $(DEBUG_CFLAGS)
-	LDFLAGS =
-else
-	CFLAGS = $(RELEASE_CFLAGS)
-	LDFLAGS =
-endif
+# This is also my first "master" Makefile
+# VPATH = src:../include
+#.SUFFIXES: .c
+.DEFAULT: all
+.PHONY: clean mrproper 
+
+export DEBUG = yes
+export CC = gcc
+export CD = cd
+export RM = rm
+export ECHO = echo
+export MAKEDEPEND = makedepend
+export MAKE = make
 
 # File_dir
 SRCDIR = src
@@ -26,31 +31,63 @@ else
 	BINDIR = $(RELEASE_BINDIR)
 endif
 
-LIBDIR = ../TEST_LIB_C
-LIBOBJDIR = $(LIBDIR)/obj/debug
-
+SRC = $(SRCDIR)/main.c
+OBJ = $(OBJDIR)/main.o
 # Executable_name
-BIN = main
+BIN = $(BINDIR)/main
 
-# @ : hide current trace.
-all: $(BIN)
+GREETAPIDIR = ../GREET_API_C
+MATHAPIDIR = ../MATH_API_C
+
+INCGREETAPIDIR = ../GREET_API_C/include
+INCMATHAPIDIR = ../MATH_API_C/include
+
+LIBGREETAPIDIR = ../GREET_API_C/lib/debug
+LIBMATHAPIDIR = ../MATH_API_C/lib/debug
+
+DEBUG_CFLAGS = -I$(INCGREETAPIDIR) -I$(INCMATHAPIDIR) \
+               -W -Wall -ansi -pedantic -g
+RELEASE_CFLAGS = -I$(INCGREETAPIDIR) -I$(INCMATHAPIDIR) \
+                 -W -Wall -ansi -pedantic
 
 ifeq ($(DEBUG), yes)
-	@echo -e "\033[31;5mGeneration en mode debug ...\033[0m"
+	CFLAGS = $(DEBUG_CFLAGS)
 else
-	@echo -e "\033[32;5mGeneration en mode release ...\033[0m"
+	CFLAGS = $(RELEASE_CFLAGS)
 endif
 
-$(BIN): main.o
-	@$(CC) -o $(BINDIR)/$@ $(OBJDIR)/$< $(LIBOBJDIR)/libgreeting.o $(LDFLAGS)
+LDFLAGS = -L$(LIBGREETAPIDIR) -lgreetingapi \
+	      -L$(LIBMATHAPIDIR) -lmathapi
 
-main.o: $(SRCDIR)/main.c
-	@$(CC) -o $(OBJDIR)/$@ -c $< $(CFLAGS)
+SUBDIRS = $(GREETAPIDIR) \
+          $(MATHAPIDIR)
 
-.PHONY: clean rmproper 
+
+# @ : hide current trace.
+all:
+ifeq ($(DEBUG), yes)
+	@$(ECHO) -e "\033[31;5mGeneration en mode debug ...\033[0m"
+else
+	@$(ECHO) -e "\033[32;5mGeneration en mode release ...\033[0m"
+endif
+	for dir in $(SUBDIRS); do ($(CD) $$dir; $(MAKE) $@); done
+	$(MAKE) $(BIN)
+
+$(BIN): $(OBJ)
+	@$(CC) -o $@ $(OBJ) $(LDFLAGS)
+
+$(OBJ): $(SRC)
+	@$(CC) -o $@ -c $< $(CFLAGS)
 
 clean:
-	@rm -rf $(OBJDIR)/*.o
+	@$(ECHO) -e "\033[31;5mSuppression des fichiers objets et librairies ...\033[0m"
+	@$(RM) -rf $(OBJDIR)/*.o
+	for dir in $(SUBDIRS); do ($(CD) $$dir; $(MAKE) $@); done
 
-mrproper:
-	@rm -rf $(BINDIR)/$(BIN)
+mrproper: clean
+	@$(ECHO) -e "\033[31;5mSuppression de l'executable ...\033[0m"
+	@$(RM) -f $(BIN)
+
+depend:
+	@$(MAKEDEPEND) -- $(CFLAGS) -- $(SRC)
+	for dir in $(SUBDIRS); do ($(CD) $$dir; $(MAKE) $@); done
