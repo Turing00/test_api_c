@@ -9,7 +9,7 @@
 # VPATH = src:../include
 #.SUFFIXES: .c
 .DEFAULT: all
-.PHONY: clean mrproper 
+.PHONY: clean mrproper
 
 export DEBUG = yes
 export CC = gcc
